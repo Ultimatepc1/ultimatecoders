@@ -30,6 +30,10 @@ module.exports = db.sequelize.define(
         type: Sequelize.STRING,
         defaultValue:'student',
     },
+    dp:{
+      type: Sequelize.STRING,
+      defaultValue:'https://icon-library.com/images/unknown-person-icon/unknown-person-icon-4.jpg',
+    },
     phoneno:{
         type:Sequelize.STRING,
         allowNull:true,

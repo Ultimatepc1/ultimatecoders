@@ -11,11 +11,12 @@ app.use(
     extended: false
   })
 )
-
+// var mediadir = require('path').join(__dirname,'/media')
+// app.use(express.static(mediadir))
+// app.get('/media/images/<>')
 var Users = require('./routes/Users')
 
 app.use('/users', Users)
-
 app.listen(port, function() {
   console.log('Server is running on port: ' + port)
 })

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 
 const User = require('../models/User')
+const Course = require('../models/Course')
 users.use(cors())
 
 process.env.SECRET_KEY = 'secret'
@@ -18,6 +19,7 @@ users.post('/register', (req, res) => {
     created_at: today,
     userrole:req.body.userrole,
     phoneno:req.body.phoneno,
+    dp:req.body.dp,
   }
 
   User.findOne({
@@ -56,7 +58,7 @@ users.post('/login', (req, res) => {
     .then(user => {
       if (user) {
         if (bcrypt.compareSync(req.body.password, user.password)) {
-          const tempuse = {"id": user.id,"name":user.name,"email":user.email,"userrole":user.userrole,"created_at":user.created_at,"phoneno":user.phoneno}
+          const tempuse = {"id": user.id,"name":user.name,"email":user.email,"userrole":user.userrole,"created_at":user.created_at,"phoneno":user.phoneno,"dp":user.dp}
           const token = jwt.sign(tempuse,'secret');
           res.json({"token":token})
         }else{
@@ -71,6 +73,46 @@ users.post('/login', (req, res) => {
     })
 })
 
+users.get('/courses',(req,res)=>{
+  console.log("Users wala courses");
+  Course.findAll().then(function(allcourses){
+      var i;
+
+    var result=[];
+    for(i=0;i<allcourses.length;i++)
+    {
+      var tutorname="", dp="";
+      User.findOne({
+        where: {
+          email: allcourses[i].tutoremail
+        }
+      }).then(user=>{
+        tutorname=user.name
+        dp=user.dp
+      })
+      .catch(err=>{
+        res.send('error: '+err)
+      });
+
+      var tutor={"id":allcourses[i].tutorid, "name":tutorname, "email":allcourses[i].tutoremail,"dp":dp};
+
+      var tempresult={"id":allcourses[i].courseid, "title":allcourses[i].title,
+      "tutor":tutor, "duration":allcourses[i].duration,"poster":allcourses[i].poster}
+      
+     
+      result.push(tempresult);
+
+      console.log(allcourses[i]);
+    }
+    console.log(result);
+    res.send(result);
+  })
+  .catch(err=>{
+    res.send('error: '+err)
+  })
+  ;
+
+});
 // users.get('/profile', (req, res) => {
 //   var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
 
