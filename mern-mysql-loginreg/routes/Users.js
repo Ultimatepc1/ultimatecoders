@@ -6,6 +6,8 @@ const bcrypt = require('bcrypt')
 
 const User = require('../models/User')
 const Course = require('../models/Course')
+const Video = require('../models/Video')
+const Quiz = require('../models/Quiz')
 users.use(cors())
 
 process.env.SECRET_KEY = 'secret'
@@ -34,7 +36,8 @@ users.post('/register', (req, res) => {
           userData.password = hash
           User.create(userData)
             .then(user => {
-              res.json({ status: user.email + 'Registered!' })
+              var result={"name": user.name,"email": user.email,"password": user.password,"phoneno": user.phoneno,"userrole": 'student'}
+              res.json({ "result": result })
             })
             .catch(err => {
               res.json({"result": {"error" : err}})
@@ -69,7 +72,7 @@ users.post('/login', (req, res) => {
       }
     })
     .catch(err => {
-      res.status(400).json({ "error": err })
+      res.status(500).json({ "error": err })
     })
 })
 
@@ -107,56 +110,157 @@ users.get('/courses',(req,res)=>{
 });
 
 users.get('/courses/:courseid',(req,res)=>{
+  var localid=parseInt(req.params.courseid)
+  var videodata=[]
 
+      Video.findAll({
+        where:{
+          
+          courseid:localid,
+        }
+      })
+      .then(video=>{
+        console.log("video"+video)
+        var i;
+        for(i=0;i<video.length;i++)
+        {
+          var videoresult={"id":video[i].videoid, "title":video[i].videotitle,
+                            "duration":video[i].videoduration,"videourl":video[i].videourl}
+         console.log("videoresult"+videoresult)
+          videodata.push(videoresult)
+          
+          // videodata.push(videoresult);
+        }
+        console.log("videodata after for loop"+videodata)
+        // res.send(video);
 
-  Course.findOne({
-    where: {
-      courseid:req.params.courseid
-    }
-  })
-  .then(course=>{
-    if(course){
+            var quizdata=[]
+            Quiz.findAll({
+              where:{
+                courseid:localid,
+              }
+            })
+            .then(quiz1=>{
+              var j
+              for(j=0;j<quiz1.length;j++)
+              {
+                var quizresult={"id":quiz1[j].quizid, "title":quiz1[j].quiztitle, "quizurl":quiz1[j].quizurl }
+                quizdata.push(quizresult)
+              }
+            
 
-      // Pass course
-      var result=[];
+                // Course
+                Course.findOne({
+                  where: {
+                    courseid:localid
+                  }
+                })
+                .then(course=>{
+                  if(course){
+              
+                    // Pass course
+                    // var result=[];
+                    console.log("videodata in if of then of course"+videodata)
+                    var tutor={"id":course.tutorid, "name":course.tutorname, "email":course.tutoremail,"dp":course.tutordp};    
+                    var tempresult={"id":course.courseid, "title":course.title,
+                    "tutor":tutor, "duration":course.duration,"poster":course.poster,
+                    "description":course.coursedescription,
+                      "video":videodata, "quiz":quizdata}
+                    // result.push(tempresult);
+                    console.log("tempresult"+tempresult)
+                    res.json({'result': tempresult});
+                    }
+                    else
+                    {
+                      res.json({'error':"Course not found"})
+                    }
+                })
+                .catch(err=>{
+                  res.json({'error':err})
+                });
+            })
+        .catch(err=>{
+          console.log('error in quiz')
+          res.json({'error in quiz':err})
+        });
+      })
+      .catch(err=>{
+        console.log("error in video")
+        res.json({'error':err})
+        
+      });
 
-      var tutor={"id":course.tutorid, "name":course.tutorname, "email":course.tutoremail,"dp":course.tutordp};
-
-      var tempresult={"id":course.courseid, "title":course.title,
-      "tutor":tutor, "duration":course.duration,"poster":course.poster,"description":course.coursedescription,}
-      result.push(tempresult);
-      res.json({'result': result});
-      }
-    else
-    {
-      res.json({'error':"Course not found"})
-    }
-
-  }
-  )
-  .catch(err=>{
-    res.json({'error':err})
-  });
+      console.log("videodata at the end"+videodata);
+      
 
 });
-// users.get('/profile', (req, res) => {
-//   var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
+// users.get('/courses/:courseid',(req,res)=>{
+//   var localid=parseInt(req.params.courseid)
+//   var videodata=[]
 
-//   User.findOne({
-//     where: {
-//       id: decoded.id
-//     }
-//   })
-//     .then(user => {
-//       if (user) {
-//         res.json(user)
-//       } else {
-//         res.send('User does not exist')
-//       }
-//     })
-//     .catch(err => {
-//       res.send('error: ' + err)
-//     })
-// })
+//       Video.findAll({
+//         where:{
+          
+//           courseid:localid,
+//         }
+//       })
+//       .then(video=>{
+
+//         console.log("video"+video)
+//         var i;
+//         for(i=0;i<video.length;i++)
+//         {
+//           var videoresult={"id":video[i].videourl, "title":video[i].videotitle,
+//                             "duration":video[i].videoduration,"videourl":video[i].videourl}
+//          console.log("videoresult"+videoresult)
+//           videodata.push(videoresult)
+          
+//           // videodata.push(videoresult);
+//         }
+//         console.log("videodata after for loop"+videodata)
+//         // res.send(video);
+
+// //--------------
+//         Course.findOne({
+//           where: {
+//             courseid:req.params.courseid
+//           }
+//         })
+//         .then(course=>{
+//           if(course){
+      
+//             // Pass course
+//             // var result=[];
+//             console.log("videodata in if of then of course"+videodata)
+//             var tutor={"id":course.tutorid, "name":course.tutorname, "email":course.tutoremail,"dp":course.tutordp};    
+//             var tempresult={"id":course.courseid, "title":course.title,
+//             "tutor":tutor, "duration":course.duration,"poster":course.poster,
+//             "description":course.coursedescription,
+//               "video":videodata}
+//             // result.push(tempresult);
+//             console.log("tempresult"+tempresult)
+//             res.json({'result': tempresult});
+
+//             }
+//           else
+//           {
+//             res.json({'error':"Course not found"})
+//           }
+      
+//         }
+//         )
+//         .catch(err=>{
+//           res.json({'error':err})
+//         });
+// // ------------------
+//       })
+//       .catch(err=>{
+//         console.log("error in video")
+//         res.json({'error':err})  
+//       });
+//       console.log("videodata at the end"+videodata);
+//   });
+
+
 
 module.exports = users
