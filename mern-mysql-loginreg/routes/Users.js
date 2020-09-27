@@ -75,42 +75,68 @@ users.post('/login', (req, res) => {
 
 users.get('/courses',(req,res)=>{
   console.log("Users wala courses");
-  Course.findAll().then(function(allcourses){
+  Course.findAll({
+    order: [
+      ['studentcount', 'DESC'],
+    ],}
+  ).then(function(allcourses){
       var i;
 
-    var result=[];
-    for(i=0;i<allcourses.length;i++)
-    {
-      var tutorname="", dp="";
-      User.findOne({
-        where: {
-          email: allcourses[i].tutoremail
-        }
-      }).then(user=>{
-        tutorname=user.name
-        dp=user.dp
-      })
-      .catch(err=>{
-        res.send('error: '+err)
-      });
+      var result=[];
+      for(i=0;i<allcourses.length;i++)
+      {
+        var tutor={"id":allcourses[i].tutorid, "name":allcourses[i].tutorname, "email":allcourses[i].tutoremail,"dp":allcourses[i].tutordp};
 
-      var tutor={"id":allcourses[i].tutorid, "name":tutorname, "email":allcourses[i].tutoremail,"dp":dp};
+        var tempresult={"id":allcourses[i].courseid, "title":allcourses[i].title,
+        "tutor":tutor, "duration":allcourses[i].duration,"poster":allcourses[i].poster}
+        result.push(tempresult);
 
-      var tempresult={"id":allcourses[i].courseid, "title":allcourses[i].title,
-      "tutor":tutor, "duration":allcourses[i].duration,"poster":allcourses[i].poster}
-      
-     
-      result.push(tempresult);
+        console.log(allcourses[i]);
+      }
+      console.log(result);
+      if (result.length > 0){
+        res.json({'result': result});
+      }else{
+        res.json({'error': 'No Courses Found'})
+      }
+    })
+    .catch(err=>{
+      res.json({'error':err})
+    });
 
-      console.log(allcourses[i]);
+});
+
+users.get('/courses/:courseid',(req,res)=>{
+
+
+  Course.findOne({
+    where: {
+      courseid:req.params.courseid
     }
-    console.log(result);
-    res.send(result);
   })
+  .then(course=>{
+    if(course){
+
+      // Pass course
+      var result=[];
+
+      var tutor={"id":course.tutorid, "name":course.tutorname, "email":course.tutoremail,"dp":course.tutordp};
+
+      var tempresult={"id":course.courseid, "title":course.title,
+      "tutor":tutor, "duration":course.duration,"poster":course.poster,"description":course.coursedescription,}
+      result.push(tempresult);
+      res.json({'result': result});
+      }
+    else
+    {
+      res.json({'error':"Course not found"})
+    }
+
+  }
+  )
   .catch(err=>{
-    res.send('error: '+err)
-  })
-  ;
+    res.json({'error':err})
+  });
 
 });
 // users.get('/profile', (req, res) => {
